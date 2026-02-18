@@ -1,0 +1,39 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Smoke check
+        run: |
+          echo "Node version: $(node -v)"
+          node -e "console.log('Loaded package name:', require('./package.json').name)"
+
+      - name: (Optional) Start app and test HTTP
+        if: false
+        run: |
+          npm start &
+          sleep 3
+          curl -fsS http://localhost:3000 || (echo 'App did not respond' && exit 1)
